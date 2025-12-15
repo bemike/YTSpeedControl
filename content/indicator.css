@@ -1,0 +1,136 @@
+/* ========================================
+   YT Speed Control - Speed Indicator Styles
+   Design: Glassmorphism
+   ======================================== */
+
+.yt-speed-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2147483647;
+
+    /* Glassmorphism */
+    background: linear-gradient(135deg,
+            rgba(102, 126, 234, 0.85) 0%,
+            rgba(118, 75, 162, 0.85) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+
+    /* Size & Shape */
+    padding: 16px 28px;
+    border-radius: 16px;
+
+    /* Border & Shadow */
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 40px rgba(102, 126, 234, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+
+    /* Visibility */
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -50%) scale(0.8);
+    pointer-events: none;
+
+    /* Transitions */
+    transition:
+        opacity 0.3s ease,
+        visibility 0.3s ease,
+        transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.yt-speed-indicator.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1.2);
+}
+
+.yt-speed-indicator .indicator-speed {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    letter-spacing: -1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Glow animation when appearing */
+@keyframes indicator-glow {
+    0% {
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            0 0 40px rgba(102, 126, 234, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    50% {
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            0 0 60px rgba(102, 126, 234, 0.5),
+            inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    }
+
+    100% {
+        box-shadow:
+            0 8px 32px rgba(0, 0, 0, 0.3),
+            0 0 40px rgba(102, 126, 234, 0.3),
+            inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+}
+
+.yt-speed-indicator.visible {
+    animation: indicator-glow 1s ease-in-out;
+}
+
+/* Sparkle decoration */
+.yt-speed-indicator::before,
+.yt-speed-indicator::after {
+    content: '✦';
+    position: absolute;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.6);
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+.yt-speed-indicator::before {
+    top: 8px;
+    left: 12px;
+    animation-delay: 0s;
+}
+
+.yt-speed-indicator::after {
+    bottom: 8px;
+    right: 12px;
+    animation-delay: 1s;
+}
+
+@keyframes sparkle {
+
+    0%,
+    100% {
+        opacity: 0.4;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.2);
+    }
+}
+
+/* Fullscreen compatibility */
+:fullscreen .yt-speed-indicator,
+::backdrop .yt-speed-indicator,
+*:-webkit-full-screen .yt-speed-indicator {
+    position: fixed !important;
+}
+
+/* Dark mode adjustment - for YouTube's dark theme */
+html[dark] .yt-speed-indicator,
+[dark] .yt-speed-indicator {
+    border-color: rgba(255, 255, 255, 0.15);
+}
