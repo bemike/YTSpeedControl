@@ -1,10 +1,10 @@
 # ⚡ YT Speed Control
 
-> **Take control of your YouTube viewing experience with elegant keyboard shortcuts and a beautiful glassmorphism UI.**
+> **Take control of your YouTube and Bilibili viewing experience with elegant keyboard shortcuts and a beautiful glassmorphism UI.**
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
 
 ---
@@ -12,6 +12,18 @@
 ## ✨ Features
 
 ### 🎹 Keyboard Shortcuts
+
+#### YouTube
+| Shortcut | Action |
+|----------|--------|
+| `Shift + 1` | Set speed to **1.0x** (normal) |
+| `Shift + 2` | Set speed to **1.5x** |
+| `Shift + 3` | Set speed to **2.0x** |
+| `Shift + 4` | Set speed to **3.0x** |
+| `+` or `=` | Increase speed by **0.25x** |
+| `-` | Decrease speed by **0.25x** |
+
+#### Bilibili
 | Shortcut | Action |
 |----------|--------|
 | `Shift + 1` | Set speed to **1.0x** (normal) |
@@ -81,9 +93,16 @@ Click the extension icon to access:
 - **Step**: 0.25x increments
 
 ### Compatibility
+
+#### YouTube
 - ✅ Regular YouTube videos
 - ✅ YouTube Shorts
 - ✅ Embedded YouTube players
+- ✅ Fullscreen mode
+- ✅ Theater mode
+
+#### Bilibili
+- ✅ Regular Bilibili videos
 - ✅ Fullscreen mode
 - ✅ Theater mode
 
@@ -96,7 +115,8 @@ YTSpeedControl/
 │   ├── popup.css          # Glassmorphism styles
 │   └── popup.js           # Popup logic
 ├── content/
-│   ├── content.js         # Keyboard & speed control
+│   ├── content.js         # YouTube keyboard & speed control
+│   ├── bilibili.js        # Bilibili keyboard & speed control
 │   └── indicator.css      # Speed indicator styles
 ├── background/
 │   └── service-worker.js  # Message handling
@@ -110,9 +130,10 @@ YTSpeedControl/
 | Version | Features |
 |---------|----------|
 | **V1** ✅ | Keyboard shortcuts, speed indicator, popup panel, speed memory |
+| **V1.1** ✅ | Bilibili platform support |
 | **V2** | Custom shortcut mapping, per-channel default speeds |
 | **V3** | Inline control bar button, settings import/export |
-| **V4** | Support for Bilibili, Vimeo, and other platforms |
+| **V4** | Support for Vimeo, Twitch, and other platforms |
 
 ---
 
@@ -132,5 +153,5 @@ MIT License - feel free to use and modify as you like!
 ---
 
 <p align="center">
-  Made with ❤️ for YouTube power users
+  Made with ❤️ for YouTube and Bilibili power users
 </p>

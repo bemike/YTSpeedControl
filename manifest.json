@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "YT Speed Control",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Control YouTube video playback speed with elegant UI and keyboard shortcuts",
   "permissions": [
     "storage",
@@ -9,7 +9,9 @@
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
-    "https://youtube.com/*"
+    "https://youtube.com/*",
+    "https://www.bilibili.com/*",
+    "https://bilibili.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",
@@ -26,9 +28,29 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
-      "js": ["content/content.js"],
-      "css": ["content/indicator.css"],
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*"
+      ],
+      "js": [
+        "content/content.js"
+      ],
+      "css": [
+        "content/indicator.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.bilibili.com/*",
+        "https://bilibili.com/*"
+      ],
+      "js": [
+        "content/bilibili.js"
+      ],
+      "css": [
+        "content/indicator.css"
+      ],
       "run_at": "document_idle"
     }
   ],
