@@ -11,7 +11,10 @@
     "https://www.youtube.com/*",
     "https://youtube.com/*",
     "https://www.bilibili.com/*",
-    "https://bilibili.com/*"
+    "https://bilibili.com/*",
+    "https://www.weibo.com/*",
+    "https://weibo.com/*",
+    "https://video.weibo.com/*"
   ],
   "action": {
     "default_popup": "popup/popup.html",
@@ -47,6 +50,20 @@
       ],
       "js": [
         "content/bilibili.js"
+      ],
+      "css": [
+        "content/indicator.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://www.weibo.com/*",
+        "https://weibo.com/*",
+        "https://video.weibo.com/*"
+      ],
+      "js": [
+        "content/weibo.js"
       ],
       "css": [
         "content/indicator.css"
