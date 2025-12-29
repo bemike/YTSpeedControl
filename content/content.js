@@ -241,15 +241,19 @@ function setupNavigationListener() {
         setTimeout(applySpeedToVideo, 500);
     });
 
-    // Also watch for video element changes
+    // Track the last known video element to detect new videos
+    let lastVideoElement = getVideoElement();
+    
+    // Also watch for video element changes - only apply speed when a NEW video is added
     const observer = new MutationObserver((mutations) => {
-        for (const mutation of mutations) {
-            if (mutation.addedNodes.length) {
-                const video = getVideoElement();
-                if (video && video.playbackRate !== currentSpeed) {
-                    applySpeedToVideo();
-                }
-            }
+        const currentVideo = getVideoElement();
+        
+        // Only apply saved speed if a new video element was added
+        // This allows users to change speed via site menus without being overridden
+        if (currentVideo && currentVideo !== lastVideoElement) {
+            console.log('[YT Speed Control] New video element detected, applying saved speed');
+            lastVideoElement = currentVideo;
+            applySpeedToVideo();
         }
     });
 
