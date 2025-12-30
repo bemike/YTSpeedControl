@@ -32,21 +32,25 @@ let indicator = null;
  * Initialize the content script
  */
 async function init() {
-    // Load saved speed
-    const result = await chrome.storage.sync.get(['playbackSpeed']);
-    currentSpeed = result.playbackSpeed || 1.0;
+    try {
+        // Load saved speed
+        const result = await chrome.storage.sync.get(['playbackSpeed']);
+        currentSpeed = result.playbackSpeed || 1.0;
 
-    // Create speed indicator
-    createIndicator();
+        // Create speed indicator
+        createIndicator();
 
-    // Apply speed to video
-    applySpeedToVideo();
+        // Apply speed to video
+        applySpeedToVideo();
 
-    // Set up event listeners
-    setupKeyboardShortcuts();
-    setupNavigationListener();
+        // Set up event listeners
+        setupKeyboardShortcuts();
+        setupNavigationListener();
 
-    console.log('[YT Speed Control] Initialized with speed:', currentSpeed);
+        console.log('[YT Speed Control] Initialized with speed:', currentSpeed);
+    } catch (e) {
+        // Silently ignore errors (extension context may be invalidated)
+    }
 }
 
 /**
@@ -139,55 +143,67 @@ function applySpeedToVideo() {
  * Set the playback speed
  */
 async function setSpeed(speed, showMessage = null) {
-    // Clamp speed to valid range
-    speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed));
-    // Round to nearest step
-    speed = Math.round(speed / SPEED_STEP) * SPEED_STEP;
-
-    currentSpeed = speed;
-
-    // Apply to video
-    applySpeedToVideo();
-
-    // Save to storage
-    await chrome.storage.sync.set({ playbackSpeed: speed });
-
-    // Show indicator
-    showIndicator(speed, showMessage);
-
-    // Notify popup if open
     try {
-        chrome.runtime.sendMessage({
-            action: 'speedUpdated',
-            speed: speed
-        });
-    } catch (e) {
-        // Popup might not be open
-    }
+        // Clamp speed to valid range
+        speed = Math.max(MIN_SPEED, Math.min(MAX_SPEED, speed));
+        // Round to nearest step
+        speed = Math.round(speed / SPEED_STEP) * SPEED_STEP;
 
-    console.log('[YT Speed Control] Speed set to:', speed);
+        currentSpeed = speed;
+
+        // Apply to video
+        applySpeedToVideo();
+
+        // Save to storage
+        await chrome.storage.sync.set({ playbackSpeed: speed });
+
+        // Show indicator
+        showIndicator(speed, showMessage);
+
+        // Notify popup if open
+        try {
+            chrome.runtime.sendMessage({
+                action: 'speedUpdated',
+                speed: speed
+            });
+        } catch (e) {
+            // Popup might not be open
+        }
+
+        console.log('[YT Speed Control] Speed set to:', speed);
+    } catch (e) {
+        // Silently ignore all errors (usually extension context invalidated)
+    }
 }
 
 /**
  * Increment speed by step
  */
 function incrementSpeed() {
-    if (currentSpeed >= MAX_SPEED) {
-        showIndicator(currentSpeed, 'MAX');
+    // Get actual speed from video element to handle menu-based speed changes
+    const video = getVideoElement();
+    const actualSpeed = video ? video.playbackRate : currentSpeed;
+
+    if (actualSpeed >= MAX_SPEED) {
+        showIndicator(actualSpeed, 'MAX');
         return;
     }
-    setSpeed(currentSpeed + SPEED_STEP);
+    setSpeed(actualSpeed + SPEED_STEP).catch(() => { });
 }
 
 /**
  * Decrement speed by step
  */
 function decrementSpeed() {
-    if (currentSpeed <= MIN_SPEED) {
-        showIndicator(currentSpeed, 'MIN');
+    // Get actual speed from video element to handle menu-based speed changes
+    const video = getVideoElement();
+    const actualSpeed = video ? video.playbackRate : currentSpeed;
+
+    if (actualSpeed <= MIN_SPEED) {
+        showIndicator(actualSpeed, 'MIN');
         return;
     }
-    setSpeed(currentSpeed - SPEED_STEP);
+    setSpeed(actualSpeed - SPEED_STEP).catch(() => { });
 }
 
 /**
@@ -208,7 +224,7 @@ function setupKeyboardShortcuts() {
             if (preset !== undefined) {
                 e.preventDefault();
                 e.stopPropagation();
-                setSpeed(preset);
+                setSpeed(preset).catch(() => { });
                 return;
             }
         }
@@ -243,11 +259,11 @@ function setupNavigationListener() {
 
     // Track the last known video element to detect new videos
     let lastVideoElement = getVideoElement();
-    
+
     // Also watch for video element changes - only apply speed when a NEW video is added
     const observer = new MutationObserver((mutations) => {
         const currentVideo = getVideoElement();
-        
+
         // Only apply saved speed if a new video element was added
         // This allows users to change speed via site menus without being overridden
         if (currentVideo && currentVideo !== lastVideoElement) {
@@ -266,31 +282,46 @@ function setupNavigationListener() {
 /**
  * Listen for messages from popup
  */
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.action === 'setSpeed') {
-        setSpeed(message.speed);
-        sendResponse({ success: true });
-    }
-    return true;
-});
+try {
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+        try {
+            if (message.action === 'setSpeed') {
+                setSpeed(message.speed);
+                sendResponse({ success: true });
+            }
+        } catch (e) {
+            // Silently ignore
+        }
+        return true;
+    });
+} catch (e) {
+    // Extension context invalidated
+}
 
 /**
  * Listen for storage changes (sync across tabs)
  */
-chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'sync' && changes.playbackSpeed) {
-        const newSpeed = changes.playbackSpeed.newValue;
-        if (newSpeed !== currentSpeed) {
-            currentSpeed = newSpeed;
-            applySpeedToVideo();
-            // Don't show indicator for cross-tab sync
+try {
+    chrome.storage.onChanged.addListener((changes, namespace) => {
+        try {
+            if (namespace === 'sync' && changes.playbackSpeed) {
+                const newSpeed = changes.playbackSpeed.newValue;
+                if (newSpeed !== currentSpeed) {
+                    currentSpeed = newSpeed;
+                    applySpeedToVideo();
+                }
+            }
+        } catch (e) {
+            // Silently ignore
         }
-    }
-});
+    });
+} catch (e) {
+    // Extension context invalidated
+}
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => init().catch(() => { }));
 } else {
-    init();
+    init().catch(() => { });
 }
