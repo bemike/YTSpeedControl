@@ -1,3 +1,28 @@
+# 开发记录 - 2024-12-31
+
+## v1.2.1 - YouTube Shorts 速度控制修复
+
+### 问题
+快捷键调节速度在 YouTube Shorts 上不起作用。按下快捷键后，视频上显示相应的速度指示器，但播放速度没有实际改变。
+
+### 根本原因
+YouTube Shorts 使用不同的播放器结构：
+- 使用 `ytd-reel-video-renderer` 而非 `.html5-video-player`
+- 预加载多个视频元素用于平滑滚动切换
+- 当前激活的视频通过 `[is-active]` 属性标识
+
+原来的 `getVideoElement()` 只是简单地选择第一个视频元素，而不是当前正在播放的 Shorts 视频。
+
+### 解决方案
+1. **更新 `getVideoElement()`**：检测 Shorts 页面并查找带有 `[is-active]` 属性的渲染器中的视频
+2. **新增 `shortsObserver`**：监听 `is-active` 属性变化，在用户滚动到下一个 Short 时重新应用速度
+3. **更新 `createIndicator()`**：支持在 Shorts 容器中正确放置速度指示器
+
+### 影响的文件
+- `content/content.js`
+
+---
+
 # 开发记录 - 2024-12-30
 
 ## 本次修改内容

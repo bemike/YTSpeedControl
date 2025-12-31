@@ -64,12 +64,17 @@ function createIndicator() {
     // This is more robust than global querySelector
     let playerContainer = null;
     if (video) {
-        playerContainer = video.closest('.html5-video-player') || video.parentElement;
+        // For Shorts, look for the reel renderer
+        playerContainer = video.closest('ytd-reel-video-renderer[is-active]') ||
+            video.closest('.html5-video-player') ||
+            video.parentElement;
     }
 
     // Fallback to global query if video not found yet
     if (!playerContainer) {
-        playerContainer = document.querySelector('.html5-video-player');
+        // Check for Shorts first
+        playerContainer = document.querySelector('ytd-reel-video-renderer[is-active]') ||
+            document.querySelector('.html5-video-player');
     }
 
     const target = playerContainer || document.body;
@@ -123,8 +128,38 @@ function showIndicator(speed, message = null) {
 
 /**
  * Get the YouTube video element
+ * Handles both regular YouTube videos and YouTube Shorts
  */
 function getVideoElement() {
+    // Check if we're on a Shorts page
+    const isShortsPage = window.location.pathname.startsWith('/shorts');
+
+    if (isShortsPage) {
+        // YouTube Shorts uses ytd-reel-video-renderer with multiple preloaded videos
+        // We need to find the active one (marked with [is-active] attribute)
+        const activeReelRenderer = document.querySelector('ytd-reel-video-renderer[is-active]');
+        if (activeReelRenderer) {
+            const video = activeReelRenderer.querySelector('video');
+            if (video) {
+                return video;
+            }
+        }
+
+        // Fallback: find the video that is currently playing or has the largest currentTime
+        const allVideos = document.querySelectorAll('ytd-reel-video-renderer video');
+        if (allVideos.length > 0) {
+            // Prefer playing video
+            for (const video of allVideos) {
+                if (!video.paused && video.currentTime > 0) {
+                    return video;
+                }
+            }
+            // Fallback to first video in Shorts context
+            return allVideos[0];
+        }
+    }
+
+    // Regular YouTube video
     return document.querySelector('video.html5-main-video') ||
         document.querySelector('video');
 }
@@ -275,6 +310,31 @@ function setupNavigationListener() {
 
     observer.observe(document.body, {
         childList: true,
+        subtree: true
+    });
+
+    // Special handling for YouTube Shorts scrolling
+    // When scrolling to a new Short, the [is-active] attribute changes
+    const shortsObserver = new MutationObserver((mutations) => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'is-active') {
+                const target = mutation.target;
+                // Check if this element just became active
+                if (target.hasAttribute('is-active')) {
+                    console.log('[YT Speed Control] Shorts scroll detected, reapplying speed');
+                    lastVideoElement = getVideoElement();
+                    // Small delay to ensure video is ready
+                    setTimeout(applySpeedToVideo, 100);
+                }
+            }
+        }
+    });
+
+    // Start observing for Shorts active state changes
+    // Observe the document body for attribute changes on any ytd-reel-video-renderer
+    shortsObserver.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['is-active'],
         subtree: true
     });
 }
