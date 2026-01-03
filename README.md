@@ -1,10 +1,10 @@
 # ⚡ YT Speed Control
 
-> **Take control of your YouTube, Bilibili and Weibo viewing experience with elegant keyboard shortcuts and a beautiful glassmorphism UI.**
+> **Take control of your YouTube, Bilibili, Weibo and X.com viewing experience with elegant keyboard shortcuts and a beautiful glassmorphism UI.**
 
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-green)
-![Version](https://img.shields.io/badge/version-1.1.1-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-brightgreen)
 
 ---
@@ -23,17 +23,17 @@
 | `+` or `=` | Increase speed by **0.25x** |
 | `-` | Decrease speed by **0.25x** |
 
-#### Bilibili & Weibo
+#### Bilibili, Weibo & X.com
 | Shortcut | Action |
 |----------|--------|
 | `Shift + 1` | Set speed to **1.0x** (normal) |
 | `Shift + 2` | Set speed to **1.5x** |
 | `Shift + 3` | Set speed to **2.0x** |
 | `Shift + 4` | Set speed to **3.0x** |
-| `+` or `=` | Increase speed by **0.25x** |
+| `+` or `=` or `]` | Increase speed by **0.25x** |
 | `-` or `[` | Decrease speed by **0.25x** |
 
-> **Note**: On Weibo, you can also use `]` to increase and `[` to decrease speed as alternatives.
+> **Note**: On Weibo and X.com, you can also use `]` to increase and `[` to decrease speed as alternatives.
 
 ### 🎨 Elegant UI
 - **Glassmorphism Design**: Modern frosted glass aesthetics with smooth animations
@@ -113,6 +113,11 @@ Click the extension icon to access:
 - ✅ video.weibo.com
 - ✅ Fullscreen mode
 
+#### X.com (Twitter)
+- ✅ X.com video posts
+- ✅ Maximized video view
+- ✅ Fullscreen mode
+
 ### Project Structure
 ```
 YTSpeedControl/
@@ -125,6 +130,7 @@ YTSpeedControl/
 │   ├── content.js         # YouTube keyboard & speed control
 │   ├── bilibili.js        # Bilibili keyboard & speed control
 │   ├── weibo.js           # Weibo keyboard & speed control
+│   ├── twitter.js         # X.com keyboard & speed control
 │   └── indicator.css      # Speed indicator styles
 ├── background/
 │   └── service-worker.js  # Message handling
@@ -140,6 +146,8 @@ YTSpeedControl/
 | **V1** ✅ | Keyboard shortcuts, speed indicator, popup panel, speed memory |
 | **V1.1** ✅ | Bilibili and Weibo platform support |
 | **V1.1.1** ✅ | Fixed: Site menu speed control now works without being overridden |
+| **V1.2.1** ✅ | Fixed: YouTube Shorts speed control |
+| **V1.3.0** ✅ | X.com (Twitter) video speed control support |
 | **V2** | Custom shortcut mapping, per-channel default speeds |
 | **V3** | Inline control bar button, settings import/export |
 | **V4** | Support for Vimeo, Twitch, and other platforms |
@@ -162,5 +170,5 @@ MIT License - feel free to use and modify as you like!
 ---
 
 <p align="center">
-  Made with ❤️ for YouTube, Bilibili and Weibo power users
+  Made with ❤️ for YouTube, Bilibili, Weibo and X.com power users
 </p>
