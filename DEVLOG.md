@@ -1,3 +1,41 @@
+# 开发记录 - 2026-01-03
+
+## v1.3.0 - 添加 X.com (Twitter) 视频速度控制
+
+### 新功能
+为 X.com (twitter.com) 添加视频播放速度控制支持，使用与 YouTube/Bilibili/Weibo 相同的快捷键逻辑。
+
+### 快捷键
+- `+` / `=` / `]` - 增加速度 (0.25x 步进)
+- `-` / `[` - 减少速度 (0.25x 步进)  
+- `Shift+1/2/3/4` - 预设速度 (1x/1.5x/2x/3x)
+
+### 实现要点（基于历史经验）
+1. **获取实际播放速度**：在调速前从 `video.playbackRate` 获取实际速度
+2. **多视频处理**：X.com 可能预加载多个视频，选择最大可见视频作为目标
+3. **键盘事件捕获**：在 window 和 document 上都注册 capture phase 事件，防止被网站拦截
+4. **内联样式指示器**：使用 inline CSS 确保速度指示器样式不被覆盖
+5. **SPA 导航支持**：监听 URL 变化重新应用速度
+6. **防御性错误处理**：所有 Chrome API 调用都有 try-catch 包裹
+
+### Bug 修复：最大化视频指示器不显示
+**问题**：小窗模式播放时速度指示器正常显示，但最大化视频后指示器不显示（速度可调节）
+
+**原因**：X.com 最大化视频使用了不同的 DOM 结构：
+- 最大化视图 URL 变为 `/status/.../video/1` 格式
+- 使用 `#layers` 容器作为模态框覆盖
+- 浏览器原生全屏使用 `document.fullscreenElement`
+
+**解决方案**：
+1. 检测 `/video/` URL 路径，使用 `#layers` 或 `[data-testid="videoPlayer"]` 作为容器
+2. 检测 `document.fullscreenElement`，将指示器附加到全屏元素
+3. 监听 `fullscreenchange` 事件，在全屏切换时重置指示器
+
+### 影响的文件
+- `content/twitter.js` (新增)
+
+---
+
 # 开发记录 - 2024-12-31
 
 ## v1.2.1 - YouTube Shorts 速度控制修复
