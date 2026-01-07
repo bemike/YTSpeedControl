@@ -85,96 +85,53 @@ function getVideoElement() {
 }
 
 /**
- * Get the player container for a specific video
- * Handles both inline tweets and maximized/fullscreen modal views
+ * Get the video player container
  */
-function getPlayerContainer(video) {
-    if (!video) return null;
-
-    // Check if in browser native fullscreen - use fullscreen element
+function getPlayerContainer() {
+    // Check for fullscreen element first
     if (document.fullscreenElement) {
-        // If the video is inside the fullscreen element, use that
-        if (document.fullscreenElement.contains(video)) {
-            return document.fullscreenElement;
-        }
+        return document.fullscreenElement;
     }
 
-    // Check for X.com's maximized video view (URL contains /video/)
-    // In this mode, video is in a modal/layer overlay
-    const isMaximizedView = location.pathname.includes('/video/');
+    // Try to find the specific X.com player container
+    const video = getVideoElement();
+    if (video) {
+        // [data-testid="videoPlayer"] is the reliable container for X.com
+        const player = video.closest('[data-testid="videoPlayer"]');
+        if (player) return player;
 
-    if (isMaximizedView) {
-        // Find the layer container for maximized view
-        const layerContainer = video.closest('[data-testid="videoPlayer"]') ||
-            video.closest('#layers [role="dialog"]') ||
-            video.closest('#layers') ||
-            document.querySelector('#layers');
-
-        if (layerContainer) {
-            return layerContainer;
-        }
+        // Mobile/other views might use different structure, fallback to parent
+        return video.parentNode;
     }
 
-    // Find the closest player container - X.com uses various containers
-    return video.closest('[data-testid="videoPlayer"]') ||
-        video.closest('[data-testid="videoComponent"]') ||
-        video.parentElement;
+    return document.body;
 }
 
 /**
  * Create or update the speed indicator element
- * Handles fullscreen, maximized view, and inline video modes
+ * Attaches to the video container for correct centering
  */
-function ensureIndicator(video) {
-    // For native fullscreen, always attach to fullscreen element
-    if (document.fullscreenElement && document.fullscreenElement.contains(video)) {
-        const target = document.fullscreenElement;
-
-        // Ensure positioning works
-        const computedStyle = window.getComputedStyle(target);
-        if (computedStyle.position === 'static') {
-            target.style.position = 'relative';
-        }
-
-        // Create indicator if needed
-        if (!indicator) {
-            indicator = document.createElement('div');
-            indicator.id = 'yt-speed-indicator';
-            indicator.className = 'yt-speed-indicator';
-        }
-
-        // Move to fullscreen element
-        if (indicator.parentNode !== target) {
-            target.appendChild(indicator);
-            console.log('[YT Speed Control - X.com] Indicator attached to fullscreen element');
-        }
-
-        return indicator;
-    }
-
-    const container = getPlayerContainer(video);
-    const target = container || document.body;
-
-    // Ensure container has position for absolute positioning to work
-    if (target !== document.body) {
-        const computedStyle = window.getComputedStyle(target);
-        if (computedStyle.position === 'static') {
-            target.style.position = 'relative';
-        }
-    }
-
+function ensureIndicator() {
     // Create indicator if it doesn't exist
     if (!indicator) {
         indicator = document.createElement('div');
         indicator.id = 'yt-speed-indicator';
-        indicator.className = 'yt-speed-indicator';
+        indicator.className = 'yt-speed-indicator container-centered';
     }
 
-    // Ensure indicator is in the correct container
-    if (indicator.parentNode !== target) {
-        target.appendChild(indicator);
-        console.log('[YT Speed Control - X.com] Indicator attached to:',
-            target.getAttribute('data-testid') || target.id || target.className || 'body');
+    const container = getPlayerContainer();
+
+    // If indicator is not connected or attached to wrong parent
+    if (!indicator.isConnected || indicator.parentNode !== container) {
+        // Ensure container has relative positioning if it's not body
+        if (container !== document.body) {
+            const style = window.getComputedStyle(container);
+            if (style.position === 'static') {
+                container.style.position = 'relative';
+            }
+        }
+
+        container.appendChild(indicator);
     }
 
     return indicator;
@@ -184,8 +141,7 @@ function ensureIndicator(video) {
  * Show the speed indicator with current speed
  */
 function showIndicator(speed, message = null) {
-    const video = getVideoElement();
-    const ind = ensureIndicator(video);
+    const ind = ensureIndicator();
 
     if (!ind) return;
 
@@ -193,29 +149,12 @@ function showIndicator(speed, message = null) {
     const displayText = message || `${speed.toFixed(2).replace(/\.?0+$/, '')}x`;
     ind.innerHTML = `<span class="indicator-speed">${displayText}</span>`;
 
-    // Apply visible styles with inline CSS to ensure they work
-    // Using inline styles as fallback because X.com's CSS might interfere
-    ind.style.cssText = `
-        position: absolute !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) scale(1.2) !important;
-        z-index: 2147483647 !important;
-        pointer-events: none !important;
-        opacity: 1 !important;
-        visibility: visible !important;
-        background: linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%) !important;
-        padding: 16px 28px !important;
-        border-radius: 16px !important;
-        border: 1px solid rgba(255, 255, 255, 0.25) !important;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 0 40px rgba(102, 126, 234, 0.3) !important;
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-        font-size: 28px !important;
-        font-weight: 700 !important;
-        color: #fff !important;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
-        transition: opacity 0.3s ease, transform 0.3s ease !important;
-    `;
+    // Remove inline styles that might conflict with our class
+    // Only keep transition which might be useful, or just clear it all to rely on CSS
+    ind.style.cssText = '';
+
+    // Ensure the class is present (in case it was removed)
+    ind.classList.add('container-centered');
 
     // Show indicator via class too
     ind.classList.add('visible');
@@ -417,13 +356,8 @@ function setupNavigationListener() {
         childList: true,
         subtree: true
     });
-
-    // Listen for fullscreen changes to reattach indicator
-    document.addEventListener('fullscreenchange', () => {
-        console.log('[YT Speed Control - X.com] Fullscreen changed, resetting indicator');
-        // Reset indicator so it attaches to the correct container
-        indicator = null;
-    });
+    // Note: fullscreenchange listener removed - with fixed positioning,
+    // the indicator is always attached to document.body and works in all modes
 }
 
 /**

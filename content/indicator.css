@@ -4,10 +4,10 @@
    ======================================== */
 
 .yt-speed-indicator {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    z-index: 2147483647;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    z-index: 2147483647 !important;
 
     /* Glassmorphism */
     background: linear-gradient(135deg,
@@ -122,15 +122,26 @@
     }
 }
 
-/* Fullscreen compatibility */
-:fullscreen .yt-speed-indicator,
-::backdrop .yt-speed-indicator,
-*:-webkit-full-screen .yt-speed-indicator {
-    position: fixed !important;
-}
+/* Fullscreen compatibility - already using fixed positioning */
 
 /* Dark mode adjustment - for YouTube's dark theme */
 html[dark] .yt-speed-indicator,
 [dark] .yt-speed-indicator {
     border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 
+   Container-based positioning 
+   Used when attached to a specific video container instead of document.body
+*/
+.yt-speed-indicator.container-centered {
+    position: absolute !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) scale(0.8);
+    /* Reset other fixed position properties if needed */
+}
+
+.yt-speed-indicator.container-centered.visible {
+    transform: translate(-50%, -50%) scale(1.2);
 }

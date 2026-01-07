@@ -54,49 +54,72 @@ async function init() {
 
 /**
  * Create the speed indicator element
+ * Uses fixed positioning for maximum stability across Bilibili's dynamic DOM
+ */
+/**
+ * Get the video player container
+ */
+function getPlayerContainer() {
+    // Try to find the Bilibili player container
+    // .bpx-player-video-area is often the direct parent of the video wrapping
+    // .bpx-player-video-wrap is the wrapper around the video tag itself
+
+    // Check for fullscreen element first
+    if (document.fullscreenElement) {
+        return document.fullscreenElement;
+    }
+
+    return document.querySelector('.bpx-player-video-wrap') ||
+        document.querySelector('.bilibili-player-video-wrap') ||
+        document.querySelector('.bpx-player-container') || // New player
+        document.querySelector('#bilibili-player') ||      // Old player fallback
+        document.body;                                     // Ultimate fallback
+}
+
+/**
+ * Create the speed indicator element
+ * Attaches to the video container for correct centering
  */
 function createIndicator() {
-    // Find the video element first
-    const video = getVideoElement();
-
-    // Try to find the player container relative to the video
-    let playerContainer = null;
-    if (video) {
-        // Bilibili player container class
-        playerContainer = video.closest('.bpx-player-video-wrap') ||
-            video.closest('.bilibili-player-video-wrap') ||
-            video.closest('.bpx-player-container') ||
-            video.parentElement;
-    }
-
-    // Fallback to global query if video not found yet
-    if (!playerContainer) {
-        playerContainer = document.querySelector('.bpx-player-video-wrap') ||
-            document.querySelector('.bilibili-player-video-wrap') ||
-            document.querySelector('.bpx-player-container');
-    }
-
-    const target = playerContainer || document.body;
-
     if (!indicator) {
         indicator = document.createElement('div');
         indicator.id = 'yt-speed-indicator';
-        indicator.className = 'yt-speed-indicator';
+        indicator.className = 'yt-speed-indicator container-centered';
     }
 
-    // Always ensure it's appended to the current target
-    if (indicator.parentNode !== target) {
-        target.appendChild(indicator);
+    // Get the player container
+    const container = getPlayerContainer();
+
+    // If indicator is not connected or attached to wrong parent
+    if (!indicator.isConnected || indicator.parentNode !== container) {
+        // Ensure container has relative positioning if it's not body
+        if (container !== document.body) {
+            const style = window.getComputedStyle(container);
+            if (style.position === 'static') {
+                container.style.position = 'relative';
+            }
+        }
+
+        container.appendChild(indicator);
     }
 }
 
 /**
  * Show the speed indicator with current speed
  */
+/**
+ * Show the speed indicator with current speed
+ */
 function showIndicator(speed, message = null) {
-    // Ensure indicator exists and is attached to DOM
-    if (!indicator || !indicator.isConnected) {
+    // Ensure indicator exists
+    if (!indicator) {
         createIndicator();
+    }
+
+    // Check if we need to re-attach (e.g. fullscreen toggle, page navigation)
+    const currentContainer = getPlayerContainer();
+    if (indicator.parentNode !== currentContainer) {
+        createIndicator(); // This will re-attach
     }
 
     // Set content

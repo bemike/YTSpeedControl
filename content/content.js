@@ -54,48 +54,83 @@ async function init() {
 }
 
 /**
+ * Check if currently in fullscreen mode
+ */
+function isFullscreen() {
+    return !!document.fullscreenElement;
+}
+
+/**
+ * Get the video player container
+ * Handles both regular YouTube videos and YouTube Shorts
+ * Note: In fullscreen mode, we use document.body + fixed positioning
+ */
+function getPlayerContainer() {
+    // In fullscreen mode, use document.body (indicator will use fixed positioning)
+    if (isFullscreen()) {
+        return document.body;
+    }
+
+    // Check if we're on a Shorts page
+    const isShortsPage = window.location.pathname.startsWith('/shorts');
+
+    if (isShortsPage) {
+        // YouTube Shorts uses ytd-reel-video-renderer
+        const activeReelRenderer = document.querySelector('ytd-reel-video-renderer[is-active]');
+        if (activeReelRenderer) {
+            return activeReelRenderer;
+        }
+    }
+
+    // Regular YouTube video - try to find the player container
+    return document.querySelector('.html5-video-player') ||
+        document.querySelector('#movie_player') ||
+        document.body; // Ultimate fallback
+}
+
+/**
  * Create the speed indicator element
+ * Attaches to the video container for correct centering
+ * In fullscreen mode, uses fixed positioning for reliable centering
  */
 function createIndicator() {
-    // Find the video element first
-    const video = getVideoElement();
-
-    // Try to find the player container relative to the video
-    // This is more robust than global querySelector
-    let playerContainer = null;
-    if (video) {
-        // For Shorts, look for the reel renderer
-        playerContainer = video.closest('ytd-reel-video-renderer[is-active]') ||
-            video.closest('.html5-video-player') ||
-            video.parentElement;
-    }
-
-    // Fallback to global query if video not found yet
-    if (!playerContainer) {
-        // Check for Shorts first
-        playerContainer = document.querySelector('ytd-reel-video-renderer[is-active]') ||
-            document.querySelector('.html5-video-player');
-    }
-
-    const target = playerContainer || document.body;
-
     if (!indicator) {
         indicator = document.createElement('div');
         indicator.id = 'yt-speed-indicator';
         indicator.className = 'yt-speed-indicator';
+        // Create the speed text span element
+        // Using DOM API instead of innerHTML to comply with Trusted Types CSP
+        const speedSpan = document.createElement('span');
+        speedSpan.className = 'indicator-speed';
+        indicator.appendChild(speedSpan);
     }
 
-    // Always ensure it's appended to the current target
-    if (indicator.parentNode !== target) {
-        target.appendChild(indicator);
-        // Ensure the target is positioned so absolute positioning works
-        const computedStyle = window.getComputedStyle(target);
-        if (computedStyle.position === 'static' && target !== document.body) {
-            // We avoid modifying body position
-            // But for player container, it should be relative/absolute
-            // If it's not, we might need to force it, but that's risky.
-            // Usually .html5-video-player is relative.
+    // Get the player container
+    const container = getPlayerContainer();
+    const fullscreen = isFullscreen();
+
+    // Update positioning class based on mode
+    // In fullscreen: use fixed positioning (no container-centered class)
+    // In normal mode: use absolute positioning within container (container-centered class)
+    if (fullscreen) {
+        indicator.classList.remove('container-centered');
+    } else if (container !== document.body) {
+        indicator.classList.add('container-centered');
+    } else {
+        indicator.classList.remove('container-centered');
+    }
+
+    // If indicator is not connected or attached to wrong parent
+    if (!indicator.isConnected || indicator.parentNode !== container) {
+        // Ensure container has relative positioning if it's not body and not fullscreen
+        if (container !== document.body && !fullscreen) {
+            const style = window.getComputedStyle(container);
+            if (style.position === 'static') {
+                container.style.position = 'relative';
+            }
         }
+
+        container.appendChild(indicator);
     }
 }
 
@@ -103,14 +138,23 @@ function createIndicator() {
  * Show the speed indicator with current speed
  */
 function showIndicator(speed, message = null) {
-    // Ensure indicator exists and is attached to DOM
-    if (!indicator || !indicator.isConnected) {
+    // Ensure indicator exists
+    if (!indicator) {
         createIndicator();
     }
 
-    // Set content
+    // Check if we need to re-attach (e.g. fullscreen toggle, page navigation)
+    const currentContainer = getPlayerContainer();
+    if (indicator.parentNode !== currentContainer) {
+        createIndicator(); // This will re-attach
+    }
+
+    // Set content using textContent to comply with Trusted Types CSP
     const displayText = message || `${speed.toFixed(2).replace(/\.?0+$/, '')}x`;
-    indicator.innerHTML = `<span class="indicator-speed">${displayText}</span>`;
+    const speedSpan = indicator.querySelector('.indicator-speed');
+    if (speedSpan) {
+        speedSpan.textContent = displayText;
+    }
 
     // Show indicator
     indicator.classList.add('visible');
